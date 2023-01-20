@@ -9,6 +9,7 @@ use octocrab::{
     Octocrab, Page,
 };
 use serde::de::DeserializeOwned;
+use url::Url;
 use std::fmt::Debug;
 
 pub struct RepoRef {
@@ -55,6 +56,8 @@ pub trait Activity: Sized + DeserializeOwned + Debug {
     fn author(&self) -> &str;
 
     fn title(&self) -> &str;
+
+    fn url(&self) -> &Url;
 
     fn event_time(&self, event: Event) -> Option<&DateTime<Utc>>;
 
@@ -141,6 +144,10 @@ impl Activity for PullRequest {
             .unwrap_or_default()
     }
 
+    fn url(&self) -> &Url {
+        self.html_url.as_ref().unwrap()
+    }
+
     fn event_time(&self, event: Event) -> Option<&DateTime<Utc>> {
         match event {
             Event::Open => self.created_at.as_ref(),
@@ -184,6 +191,10 @@ impl Activity for Issue {
 
     fn title(&self) -> &str {
         &self.title
+    }
+
+    fn url(&self) -> &Url {
+        &self.html_url
     }
 
     fn event_time(&self, event: Event) -> Option<&DateTime<Utc>> {

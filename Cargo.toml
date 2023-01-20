@@ -15,3 +15,4 @@ humantime = "2.1.0"
 octocrab = "0.18.1"
 serde = "1.0.152"
 tokio = { version = "1.24.2", features = ["macros"] }
+url = "2.3.0"

@@ -975,6 +975,7 @@ dependencies = [
  "octocrab",
  "serde",
  "tokio",
+ "url",
 ]
 
 [[package]]
