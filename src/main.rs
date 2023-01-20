@@ -5,10 +5,10 @@ use humantime::Duration;
 use octocrab::models::issues::Issue;
 use octocrab::models::pulls::PullRequest;
 use octocrab::Octocrab;
-use repo_activity_summary::{TimeRange, RepoRef, Event, Activity};
+use repo_activity_summary::{Activity, Event, RepoRef, TimeRange};
+use std::fmt::Debug;
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
-use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
 enum TimeOrDuration {

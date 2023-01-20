@@ -1,6 +1,13 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use octocrab::{Octocrab, Page, models::{pulls::PullRequest, issues::{Issue, IssueStateReason}}, params::State};
+use octocrab::{
+    models::{
+        issues::{Issue, IssueStateReason},
+        pulls::PullRequest,
+    },
+    params::State,
+    Octocrab, Page,
+};
 use serde::de::DeserializeOwned;
 
 pub struct RepoRef {
@@ -88,7 +95,13 @@ pub trait Activity: Sized + DeserializeOwned {
             } else {
                 "e"
             };
-            println!("{} {}s {}{}d", activities.len(), Self::name(), event.as_str(), e);
+            println!(
+                "{} {}s {}{}d",
+                activities.len(),
+                Self::name(),
+                event.as_str(),
+                e
+            );
         }
         Ok(())
     }
