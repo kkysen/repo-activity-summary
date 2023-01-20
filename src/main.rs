@@ -64,7 +64,15 @@ async fn main() -> anyhow::Result<()> {
         start: args.after.map(DateTime::<Utc>::from),
         end: args.before.map(DateTime::<Utc>::from),
     };
-    let octocrab = Octocrab::builder().oauth(gh_oauth()?).build()?;
+    let octocrab = {
+        let b = Octocrab::builder();
+        let b = if let Ok(oauth) = gh_oauth() {
+            b.oauth(oauth)
+        } else {
+            b
+        };
+        b.build()?
+    };
     let repo = RepoRef {
         octocrab: octocrab,
         owner: args.owner,
