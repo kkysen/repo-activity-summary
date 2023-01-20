@@ -16,6 +16,13 @@ pub mod auth;
 
 pub struct RepoRef {
     pub octocrab: Octocrab,
+
+    /// Whether to parallelize requests using this [`Octocrab`].
+    /// When using the default authentication,
+    /// this might run into rate-limiting,
+    /// but not with `gh`'s authentication.
+    pub parallelize: bool,
+
     pub owner: String,
     pub repo: String,
 }

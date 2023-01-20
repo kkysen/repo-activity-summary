@@ -64,9 +64,11 @@ async fn main() -> anyhow::Result<()> {
         start: args.after.map(DateTime::<Utc>::from),
         end: args.before.map(DateTime::<Utc>::from),
     };
+    let mut parallelize = false;
     let octocrab = {
         let b = Octocrab::builder();
         let b = if let Ok(oauth) = gh_oauth() {
+            parallelize = true;
             b.oauth(oauth)
         } else {
             b
@@ -74,7 +76,8 @@ async fn main() -> anyhow::Result<()> {
         b.build()?
     };
     let repo = RepoRef {
-        octocrab: octocrab,
+        octocrab,
+        parallelize,
         owner: args.owner,
         repo: args.repo,
     };
