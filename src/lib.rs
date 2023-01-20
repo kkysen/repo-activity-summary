@@ -61,7 +61,7 @@ pub struct TimeRange {
 }
 
 #[async_trait]
-pub trait Activity: Sized + DeserializeOwned + Debug {
+pub trait IActivity: Sized + DeserializeOwned + Debug {
     fn name() -> &'static str;
 
     /// Check if the [`Activity`] is unique,
@@ -79,15 +79,57 @@ pub trait Activity: Sized + DeserializeOwned + Debug {
     fn event_time(&self, event: Event) -> Option<&DateTime<Utc>>;
 
     async fn list_paged(repo: &RepoRef) -> octocrab::Result<Page<Self>>;
+}
+
+pub struct Activity<T: IActivity>(pub T);
+
+impl<T: IActivity> Activity<T> {
+    pub fn name() -> &'static str {
+        T::name()
+    }
+
+    fn is_unique(&self) -> bool {
+        self.0.is_unique()
+    }
+
+    pub fn number(&self) -> u64 {
+        self.0.number()
+    }
+
+    pub fn author(&self) -> &str {
+        self.0.author()
+    }
+
+    pub fn title(&self) -> &str {
+        self.0.title()
+    }
+
+    pub fn url(&self) -> &Url {
+        self.0.url()
+    }
+
+    pub fn event_time(&self, event: Event) -> Option<&DateTime<Utc>> {
+        self.0.event_time(event)
+    }
+
+    async fn list_paged(repo: &RepoRef) -> octocrab::Result<Page<T>> {
+        T::list_paged(repo).await
+    }
 
     async fn list(repo: &RepoRef) -> octocrab::Result<Vec<Self>> {
         let page = Self::list_paged(repo).await?;
-        let mut all = repo.octocrab.all_pages(page).await?;
-        all.retain(Self::is_unique);
+        let all = repo
+            .octocrab
+            .all_pages(page)
+            .await?
+            .into_iter()
+            .map(Self)
+            .filter(Self::is_unique)
+            .collect::<Vec<_>>();
         Ok(all)
     }
 
-    fn event_between(&self, event: Event, time_range: &TimeRange) -> bool {
+    pub fn event_between(&self, event: Event, time_range: &TimeRange) -> bool {
         let time = match self.event_time(event) {
             None => return false,
             Some(time) => time,
@@ -105,7 +147,7 @@ pub trait Activity: Sized + DeserializeOwned + Debug {
         true
     }
 
-    async fn list_events_between(
+    pub async fn list_events_between(
         repo: &RepoRef,
         events: &[Event],
         time_range: &TimeRange,
@@ -144,7 +186,7 @@ pub trait Activity: Sized + DeserializeOwned + Debug {
 }
 
 #[async_trait]
-impl Activity for PullRequest {
+impl IActivity for PullRequest {
     fn name() -> &'static str {
         "PR"
     }
@@ -196,7 +238,7 @@ impl Activity for PullRequest {
 }
 
 #[async_trait]
-impl Activity for Issue {
+impl IActivity for Issue {
     fn name() -> &'static str {
         "issue"
     }

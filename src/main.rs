@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
         owner: args.owner,
         repo: args.repo,
     };
-    PullRequest::list_events_between(&repo, &[Event::Open, Event::Merge], &time_range).await?;
-    Issue::list_events_between(&repo, &[Event::Open, Event::Close], &time_range).await?;
+    Activity::<PullRequest>::list_events_between(&repo, &[Event::Open, Event::Merge], &time_range).await?;
+    Activity::<Issue>::list_events_between(&repo, &[Event::Open, Event::Close], &time_range).await?;
     Ok(())
 }
