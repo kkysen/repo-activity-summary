@@ -63,7 +63,7 @@ pub trait Activity: Sized + DeserializeOwned {
 
     fn event_between(&self, event: Event, time_range: &TimeRange) -> bool {
         let time = match self.event_time(event) {
-            None => return true,
+            None => return false,
             Some(time) => time,
         };
         if let Some(start) = time_range.start {
