@@ -11,8 +11,11 @@ async-trait = "0.1.61"
 chrono = "0.4.23"
 clap = { version = "4.1.1", features = ["derive"] }
 dateparser = { git = "https://github.com/kkysen/dateparser.git", version = "0.1.7" }
+dirs = "4.0.0"
+fs-err = "2.9.0"
 humantime = "2.1.0"
 octocrab = "0.18.1"
-serde = "1.0.152"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_yaml = "0.9.17"
 tokio = { version = "1.24.2", features = ["macros"] }
 url = "2.3.0"
