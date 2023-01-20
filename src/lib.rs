@@ -10,7 +10,7 @@ use octocrab::{
     Octocrab, Page,
 };
 use serde::de::DeserializeOwned;
-use std::fmt::Debug;
+use std::fmt::{self, Debug, Display, Formatter};
 use url::Url;
 
 pub mod auth;
@@ -112,12 +112,16 @@ impl<T: IActivity> Activity<T> {
     pub fn event_time(&self, event: Event) -> Option<&DateTime<Utc>> {
         self.0.event_time(event)
     }
+}
 
+pub struct ActivityList<T: IActivity>(Vec<Activity<T>>);
+
+impl<T: IActivity> Activity<T> {
     async fn list_page(repo: &RepoRef, page: u32) -> (u32, octocrab::Result<Page<T>>) {
         (page, T::list_page(repo, page).await)
     }
 
-    async fn list(repo: &RepoRef) -> octocrab::Result<Vec<Self>> {
+    pub async fn list(repo: &RepoRef) -> octocrab::Result<ActivityList<T>> {
         let first_page = Self::list_page(repo, 1).await.1?;
         let all = match first_page.number_of_pages() {
             Some(num_pages) if repo.parallelize => {
@@ -128,7 +132,7 @@ impl<T: IActivity> Activity<T> {
                     pages[(page_num - 1) as usize] = page?.items;
                 }
                 pages.into_iter().flatten().collect()
-            },
+            }
             _ => repo.octocrab.all_pages(first_page).await?,
         };
         let all = all
@@ -136,7 +140,7 @@ impl<T: IActivity> Activity<T> {
             .map(Self)
             .filter(Self::is_unique)
             .collect::<Vec<_>>();
-        Ok(all)
+        Ok(ActivityList(all))
     }
 
     pub fn event_between(&self, event: Event, time_range: &TimeRange) -> bool {
@@ -156,40 +160,58 @@ impl<T: IActivity> Activity<T> {
         }
         true
     }
+}
 
-    pub async fn list_events_between(
-        repo: &RepoRef,
-        events: &[Event],
-        time_range: &TimeRange,
-    ) -> octocrab::Result<()> {
-        let activities = Self::list(&repo).await?;
-        for event in events {
-            let activities = activities
-                .iter()
-                .filter(|activity| activity.event_between(*event, time_range))
-                .collect::<Vec<_>>();
-            println!(
-                "{} {}s {}{}",
-                activities.len(),
-                Self::name(),
-                event.name(),
-                event.past_tense_suffix(),
-            );
-            for activity in &activities {
-                let time = activity
-                    .event_time(*event)
-                    .expect("must have an Event to be between")
-                    .naive_local();
-                println!(
-                    "\t#{} ({}{} {}) by @{}: {}",
-                    activity.number(),
-                    event.name(),
-                    event.past_tense_suffix(),
-                    time,
-                    activity.author(),
-                    activity.title(),
-                );
-            }
+pub struct ActivityFilteredList<'a, T: IActivity> {
+    pub all: Vec<&'a Activity<T>>,
+    pub event: Event,
+    pub time_range: &'a TimeRange,
+}
+
+impl<T: IActivity> ActivityList<T> {
+    pub fn events_between<'a>(
+        &'a self,
+        event: Event,
+        time_range: &'a TimeRange,
+    ) -> ActivityFilteredList<'a, T> {
+        let all = self
+            .0
+            .iter()
+            .filter(|activity| activity.event_between(event, time_range))
+            .collect::<Vec<_>>();
+        ActivityFilteredList {
+            all,
+            event,
+            time_range,
+        }
+    }
+}
+
+impl<T: IActivity> Display for ActivityFilteredList<'_, T> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        writeln!(
+            f,
+            "{} {}s {}{}",
+            self.all.len(),
+            T::name(),
+            self.event.name(),
+            self.event.past_tense_suffix(),
+        )?;
+        for activity in &self.all {
+            let time = activity
+                .event_time(self.event)
+                .expect("must have an Event to be between")
+                .naive_local();
+            writeln!(
+                f,
+                "\t#{} ({}{} {}) by @{}: {}",
+                activity.number(),
+                self.event.name(),
+                self.event.past_tense_suffix(),
+                time,
+                activity.author(),
+                activity.title(),
+            )?;
         }
         Ok(())
     }

@@ -82,10 +82,14 @@ async fn main() -> anyhow::Result<()> {
         owner: args.owner,
         repo: args.repo,
     };
-    let prs = Activity::<PullRequest>::list_events_between(&repo, &[Event::Open, Event::Merge], &time_range);
-    let issues = Activity::<Issue>::list_events_between(&repo, &[Event::Open, Event::Close], &time_range);
+    let prs = Activity::<PullRequest>::list(&repo);
+    let issues = Activity::<Issue>::list(&repo);
     let (prs, issues) = join!(prs, issues);
-    prs?;
-    issues?;
+    let (prs, issues) = (prs?, issues?);
+    let prs_opened = prs.events_between(Event::Open, &time_range);
+    let prs_merged = prs.events_between(Event::Merge, &time_range);
+    let issues_opened = issues.events_between(Event::Open, &time_range);
+    let issues_closed = issues.events_between(Event::Close, &time_range);
+    println!("{prs_opened}{prs_merged}{issues_opened}{issues_closed}");
     Ok(())
 }
