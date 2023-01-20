@@ -45,6 +45,10 @@ pub struct TimeRange {
 pub trait Activity: Sized + DeserializeOwned {
     fn name() -> &'static str;
 
+    /// Check if the [`Activity`] is unique,
+    /// i.e., if it is not the same as another type of [`Activity`].
+    fn is_unique(&self) -> bool;
+
     fn number(&self) -> u64;
 
     fn author(&self) -> &str;
@@ -57,7 +61,8 @@ pub trait Activity: Sized + DeserializeOwned {
 
     async fn list(repo: &RepoRef) -> octocrab::Result<Vec<Self>> {
         let page = Self::list_paged(repo).await?;
-        let all = repo.octocrab.all_pages(page).await?;
+        let mut all = repo.octocrab.all_pages(page).await?;
+        all.retain(Self::is_unique);
         Ok(all)
     }
 
@@ -113,6 +118,10 @@ impl Activity for PullRequest {
         "PR"
     }
 
+    fn is_unique(&self) -> bool {
+        true
+    }
+
     fn number(&self) -> u64 {
         self.number
     }
@@ -155,6 +164,13 @@ impl Activity for PullRequest {
 impl Activity for Issue {
     fn name() -> &'static str {
         "issue"
+    }
+
+    /// The GitHub API counts [`PullRequest`]s as [`Issue`]s, too,
+    /// for some reason, so if this [`Issue`] is also a [`PullRequest`],
+    /// then it is not unique.
+    fn is_unique(&self) -> bool {
+        self.pull_request.is_none()
     }
 
     fn number(&self) -> u64 {
