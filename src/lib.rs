@@ -185,6 +185,7 @@ impl Activity for Issue {
         repo.octocrab
             .issues(&repo.owner, &repo.repo)
             .list()
+            .state(State::All)
             .per_page(u8::MAX)
             .send()
             .await
