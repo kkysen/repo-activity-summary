@@ -9,8 +9,8 @@ use octocrab::{
     Octocrab, Page,
 };
 use serde::de::DeserializeOwned;
-use url::Url;
 use std::fmt::Debug;
+use url::Url;
 
 pub struct RepoRef {
     pub octocrab: Octocrab,

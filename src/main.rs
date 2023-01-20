@@ -94,7 +94,7 @@ fn gh_oauth() -> anyhow::Result<OAuth> {
                     access_token: hosts.github.oauth_token.parse().unwrap(),
                     token_type: "bearer".into(),
                     scope: vec!["repo".into()],
-                })
+                });
             }
             Err(e) => errors.push(e),
         }
