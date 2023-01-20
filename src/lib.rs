@@ -78,7 +78,7 @@ pub trait IActivity: Sized + DeserializeOwned + Debug {
 
     fn event_time(&self, event: Event) -> Option<&DateTime<Utc>>;
 
-    async fn list_paged(repo: &RepoRef) -> octocrab::Result<Page<Self>>;
+    async fn list_page(repo: &RepoRef, page: u32) -> octocrab::Result<Page<Self>>;
 }
 
 pub struct Activity<T: IActivity>(pub T);
@@ -112,15 +112,15 @@ impl<T: IActivity> Activity<T> {
         self.0.event_time(event)
     }
 
-    async fn list_paged(repo: &RepoRef) -> octocrab::Result<Page<T>> {
-        T::list_paged(repo).await
+    async fn list_page(repo: &RepoRef, page: u32) -> octocrab::Result<Page<T>> {
+        T::list_page(repo, page).await
     }
 
     async fn list(repo: &RepoRef) -> octocrab::Result<Vec<Self>> {
-        let page = Self::list_paged(repo).await?;
+        let first_page = Self::list_page(repo, 1).await?;
         let all = repo
             .octocrab
-            .all_pages(page)
+            .all_pages(first_page)
             .await?
             .into_iter()
             .map(Self)
@@ -185,6 +185,20 @@ impl<T: IActivity> Activity<T> {
     }
 }
 
+macro_rules! list_page {
+    ($method:ident, $repo:expr, $page:expr) => {{
+        let repo = $repo;
+        repo.octocrab
+            .$method(&repo.owner, &repo.repo)
+            .list()
+            .state(State::All)
+            .page($page)
+            .per_page(u8::MAX)
+            .send()
+            .await
+    }};
+}
+
 #[async_trait]
 impl IActivity for PullRequest {
     fn name() -> &'static str {
@@ -226,14 +240,8 @@ impl IActivity for PullRequest {
         }
     }
 
-    async fn list_paged(repo: &RepoRef) -> octocrab::Result<Page<Self>> {
-        repo.octocrab
-            .pulls(&repo.owner, &repo.repo)
-            .list()
-            .state(State::All)
-            .per_page(u8::MAX)
-            .send()
-            .await
+    async fn list_page(repo: &RepoRef, page: u32) -> octocrab::Result<Page<Self>> {
+        list_page!(pulls, repo, page)
     }
 }
 
@@ -278,13 +286,7 @@ impl IActivity for Issue {
         }
     }
 
-    async fn list_paged(repo: &RepoRef) -> octocrab::Result<Page<Self>> {
-        repo.octocrab
-            .issues(&repo.owner, &repo.repo)
-            .list()
-            .state(State::All)
-            .per_page(u8::MAX)
-            .send()
-            .await
+    async fn list_page(repo: &RepoRef, page: u32) -> octocrab::Result<Page<Self>> {
+        list_page!(issues, repo, page)
     }
 }
