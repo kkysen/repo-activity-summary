@@ -59,7 +59,6 @@ struct Args {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    dbg!(&args);
     let time_range = TimeRange {
         start: args.after.map(DateTime::<Utc>::from),
         end: args.before.map(DateTime::<Utc>::from),
