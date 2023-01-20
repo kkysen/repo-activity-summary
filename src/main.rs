@@ -1,17 +1,13 @@
-use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use clap::Parser;
 use dateparser::DateTimeUtc;
-use dirs::config_dir;
 use humantime::Duration;
-use octocrab::auth::OAuth;
 use octocrab::models::issues::Issue;
 use octocrab::models::pulls::PullRequest;
 use octocrab::Octocrab;
+use repo_activity_summary::auth::gh_oauth;
 use repo_activity_summary::{Activity, Event, RepoRef, TimeRange};
-use serde::Deserialize;
 use std::fmt::Debug;
-use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
 
@@ -59,47 +55,6 @@ struct Args {
 
     #[clap(long)]
     before: Option<TimeOrDuration>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhOAuth {
-    user: String,
-    oauth_token: String,
-    git_protocol: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhHosts {
-    #[serde(alias = "github.com")]
-    github: GhOAuth,
-}
-
-fn gh_oauth() -> anyhow::Result<OAuth> {
-    let config = config_dir().ok_or_else(|| anyhow!("no config dir"))?;
-
-    let try_with_dir = |dir: &str| -> anyhow::Result<Vec<u8>> {
-        let hosts_path = [config.as_path(), Path::new(dir), Path::new("hosts.yml")]
-            .into_iter()
-            .collect::<PathBuf>();
-        let hosts_bytes = fs_err::read(hosts_path)?;
-        Ok(hosts_bytes)
-    };
-
-    let mut errors = Vec::new();
-    for dir in ["gh", "GitHub CLI"] {
-        match try_with_dir(dir) {
-            Ok(hosts_bytes) => {
-                let hosts = serde_yaml::from_slice::<GhHosts>(&hosts_bytes)?;
-                return Ok(OAuth {
-                    access_token: hosts.github.oauth_token.parse().unwrap(),
-                    token_type: "bearer".into(),
-                    scope: vec!["repo".into()],
-                });
-            }
-            Err(e) => errors.push(e),
-        }
-    }
-    Err(anyhow!("{errors:?}"))
 }
 
 #[tokio::main(flavor = "current_thread")]

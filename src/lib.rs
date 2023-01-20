@@ -12,6 +12,8 @@ use serde::de::DeserializeOwned;
 use std::fmt::Debug;
 use url::Url;
 
+pub mod auth;
+
 pub struct RepoRef {
     pub octocrab: Octocrab,
     pub owner: String,
