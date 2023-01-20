@@ -7,6 +7,11 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.68"
+async-trait = "0.1.61"
+chrono = "0.4.23"
 clap = { version = "4.1.1", features = ["derive"] }
 dateparser = { git = "https://github.com/kkysen/dateparser.git", version = "0.1.7" }
 humantime = "2.1.0"
+octocrab = "0.18.1"
+serde = "1.0.152"
+tokio = { version = "1.24.2", features = ["macros"] }
