@@ -27,13 +27,21 @@ pub enum Event {
 }
 
 impl Event {
-    pub fn as_str(&self) -> &'static str {
+    pub fn name(&self) -> &'static str {
         use Event::*;
         match self {
             Open => "open",
             Update => "update",
             Close => "close",
             Merge => "merge",
+        }
+    }
+
+    pub fn past_tense_suffix(&self) -> &'static str {
+        if self.name().ends_with("e") {
+            "d"
+        } else {
+            "ed"
         }
     }
 }
@@ -99,17 +107,12 @@ pub trait Activity: Sized + DeserializeOwned + Debug {
                 .iter()
                 .filter(|activity| activity.event_between(*event, time_range))
                 .collect::<Vec<_>>();
-            let e = if event.as_str().ends_with("e") {
-                ""
-            } else {
-                "e"
-            };
             println!(
-                "{} {}s {}{}d",
+                "{} {}s {}{}",
                 activities.len(),
                 Self::name(),
-                event.as_str(),
-                e
+                event.name(),
+                event.past_tense_suffix(),
             );
         }
         Ok(())
