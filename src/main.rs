@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use clap::Parser;
 use dateparser::DateTimeUtc;
+use futures::join;
 use humantime::Duration;
 use octocrab::models::issues::Issue;
 use octocrab::models::pulls::PullRequest;
@@ -81,7 +82,10 @@ async fn main() -> anyhow::Result<()> {
         owner: args.owner,
         repo: args.repo,
     };
-    Activity::<PullRequest>::list_events_between(&repo, &[Event::Open, Event::Merge], &time_range).await?;
-    Activity::<Issue>::list_events_between(&repo, &[Event::Open, Event::Close], &time_range).await?;
+    let prs = Activity::<PullRequest>::list_events_between(&repo, &[Event::Open, Event::Merge], &time_range);
+    let issues = Activity::<Issue>::list_events_between(&repo, &[Event::Open, Event::Close], &time_range);
+    let (prs, issues) = join!(prs, issues);
+    prs?;
+    issues?;
     Ok(())
 }
