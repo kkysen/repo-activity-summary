@@ -13,6 +13,7 @@ clap = { version = "4.1.1", features = ["derive"] }
 dateparser = { git = "https://github.com/kkysen/dateparser.git", version = "0.1.7" }
 dirs = "4.0.0"
 fs-err = "2.9.0"
+futures = "0.3.25"
 humantime = "2.1.0"
 octocrab = "0.18.1"
 serde = { version = "1.0.152", features = ["derive"] }

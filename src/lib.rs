@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use futures::future::join_all;
 use octocrab::{
     models::{
         issues::{Issue, IssueStateReason},
@@ -112,16 +113,25 @@ impl<T: IActivity> Activity<T> {
         self.0.event_time(event)
     }
 
-    async fn list_page(repo: &RepoRef, page: u32) -> octocrab::Result<Page<T>> {
-        T::list_page(repo, page).await
+    async fn list_page(repo: &RepoRef, page: u32) -> (u32, octocrab::Result<Page<T>>) {
+        (page, T::list_page(repo, page).await)
     }
 
     async fn list(repo: &RepoRef) -> octocrab::Result<Vec<Self>> {
-        let first_page = Self::list_page(repo, 1).await?;
-        let all = repo
-            .octocrab
-            .all_pages(first_page)
-            .await?
+        let first_page = Self::list_page(repo, 1).await.1?;
+        let all = match first_page.number_of_pages() {
+            Some(num_pages) if repo.parallelize => {
+                let page_futs = (2..num_pages).map(|page| Self::list_page(repo, page));
+                let mut pages = (1..num_pages).map(|_| Vec::<T>::new()).collect::<Vec<_>>();
+                pages[0] = first_page.items;
+                for (page_num, page) in join_all(page_futs).await {
+                    pages[(page_num - 1) as usize] = page?.items;
+                }
+                pages.into_iter().flatten().collect()
+            },
+            _ => repo.octocrab.all_pages(first_page).await?,
+        };
+        let all = all
             .into_iter()
             .map(Self)
             .filter(Self::is_unique)
