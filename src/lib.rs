@@ -122,7 +122,7 @@ pub trait Activity: Sized + DeserializeOwned + Debug {
                     .expect("must have an Event to be between")
                     .naive_local();
                 println!(
-                    "\t#{} ({}{} {}) by {}: {}",
+                    "\t#{} ({}{} {}) by @{}: {}",
                     activity.number(),
                     event.name(),
                     event.past_tense_suffix(),
