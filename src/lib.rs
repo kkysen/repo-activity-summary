@@ -9,6 +9,7 @@ use octocrab::{
     Octocrab, Page,
 };
 use serde::de::DeserializeOwned;
+use std::fmt::Debug;
 
 pub struct RepoRef {
     pub octocrab: Octocrab,
@@ -42,7 +43,7 @@ pub struct TimeRange {
 }
 
 #[async_trait]
-pub trait Activity: Sized + DeserializeOwned {
+pub trait Activity: Sized + DeserializeOwned + Debug {
     fn name() -> &'static str;
 
     /// Check if the [`Activity`] is unique,
