@@ -114,6 +114,21 @@ pub trait Activity: Sized + DeserializeOwned + Debug {
                 event.name(),
                 event.past_tense_suffix(),
             );
+            for activity in &activities {
+                let time = activity
+                    .event_time(*event)
+                    .expect("must have an Event to be between")
+                    .naive_local();
+                println!(
+                    "\t#{} ({}{} {}) by {}: {}",
+                    activity.number(),
+                    event.name(),
+                    event.past_tense_suffix(),
+                    time,
+                    activity.author(),
+                    activity.title(),
+                );
+            }
         }
         Ok(())
     }
