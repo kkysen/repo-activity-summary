@@ -48,7 +48,7 @@ impl Event {
     }
 
     pub fn past_tense_suffix(&self) -> &'static str {
-        if self.name().ends_with("e") {
+        if self.name().ends_with('e') {
             "d"
         } else {
             "ed"
@@ -253,9 +253,7 @@ impl IActivity for PullRequest {
     }
 
     fn title(&self) -> &str {
-        self.title
-            .as_ref()
-            .map(|title| title.as_str())
+        self.title.as_deref()
             .unwrap_or_default()
     }
 
